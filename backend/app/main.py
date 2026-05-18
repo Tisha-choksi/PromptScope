@@ -4,6 +4,7 @@ main.py
 FastAPI application entry point for PromptScope.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -13,25 +14,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan handler.
-
-    Startup
-    -------
-    - Create all DB tables (idempotent; does nothing if they already exist).
-    - Start the APScheduler background scheduler.
-
-    Shutdown
-    --------
-    - Gracefully stop the scheduler so in-flight jobs can drain.
-    """
+    """Application lifespan handler."""
     # ---- startup --------------------------------------------------------
-    await init_db()
+    try:
+        await init_db()
+        logger.info("Database tables created/verified.")
+    except Exception as exc:
+        logger.warning(
+            "Could not connect to database on startup: %s. "
+            "Check DATABASE_URL in your .env file. "
+            "API endpoints that require the DB will return 503 until it is reachable.",
+            exc,
+        )
 
-    from app.workers.scheduler import setup_scheduler
-    await setup_scheduler()
+    try:
+        from app.workers.scheduler import setup_scheduler
+        await setup_scheduler()
+    except Exception as exc:
+        logger.warning("Scheduler could not start: %s", exc)
 
     yield
 

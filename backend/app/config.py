@@ -6,10 +6,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/promptscope"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/promptscope"
 
     # Redis
-    REDIS_URL: str = "redis://redis:6379/0"
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     # Security
     SECRET_KEY: str = "dev-secret-key-change-in-production"
